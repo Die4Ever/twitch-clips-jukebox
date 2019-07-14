@@ -10,6 +10,7 @@ import time
 import requests
 debug=False
 
+#will need a config file for client_id
 def getclips(client_id, args):
         url = 'https://www.googleapis.com/qpxExpress/v1/trips/search?key=mykeyhere'
         payload = "payload"
@@ -17,7 +18,7 @@ def getclips(client_id, args):
         r = requests.post(url, data=payload, headers=headers)
         return r
 
-print("Content-type: text/html;charset=utf-8")
+print("Content-Type: application/json; charset=utf-8")
 
 r = getclips('uo6dggojyb8d6soh92zknwmi5ej1q2')
 

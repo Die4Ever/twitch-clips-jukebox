@@ -7,16 +7,56 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Twitch Clips Jukebox</title>
 </head>
-<body style="margin:0; overflow:hidden;">
+<body style="margin:0; overflow:hidden; background:black;">
     <div id="clipplayer" style="width:100vw; height:100vh;">
-        <!--<iframe id="clip" src="https://clips.twitch.tv/embed?clip=LightRoundWalletJonCarnage" height="100%" width="100%"></iframe>-->
     </div>
 </body>
 
-<script src="https://player.twitch.tv/js/embed/v1.js"></script>
+<!--<script src="https://player.twitch.tv/js/embed/v1.js"></script>-->
 <script type="text/javascript">
 
-    var playlist = ['LightRoundWalletJonCarnage', 'BoredFamousChickpeaEleGiggle', 'AmusedSleepyAlbatrossPMSTwin'];
+    var playlist = ['LightRoundWalletJonCarnage', 'BoredFamousChickpeaEleGiggle', 'AmusedSleepyAlbatrossPMSTwin'];//this will probably be an array of objects once I get getMoreClips() working
+
+    var broadcasterID;
+    var broadcasterName = 'sesswole';//pull this and gameName from the url
+    var gameID;
+    var gameName;
+
+    var started_at;//RFC3339 format, looks like Date::toISOString() outputs this format
+    var ended_at;
+    var after;
+    var first = 25;//number of clips to get each ajax request
+
+    var min_time_difference = 120;//minimum number of seconds between the creation date of 2 clips, otherwise they are considered duplicates and the one with more views is chosen
+
+    var status = 'ended';
+
+    function seenSecondsAgo(clipId) {
+        //return how many seconds it's been since we last saw this clip
+        return null;
+    }
+
+    function addToHistory(clipId, clipData) {
+        //add to localStorage that we've seen this clip with the current datetime
+        //also could save some data about the clip for statistics like view count so we can see how much it's gone up?
+        //maybe that should be a separate entry and save it for all clips retreived not just the ones watched?
+        //should we save the current playlist in localStorage?
+    }
+
+    function getMoreClips() {
+        if (playlist.length > 5) return;
+
+        //if no broadcasterID or gameID, we need to retrieve those by the name given in the url
+        //https://dev.twitch.tv/docs/api/reference/#get-users
+        //https://dev.twitch.tv/docs/api/reference/#get-games
+        //might even wanna cache these in localStorage to save on my API quota
+
+        //make ajax call for https://dev.twitch.tv/docs/api/reference/#get-clips
+
+        if (status === 'ended')
+            playNextVideo();
+    }
+
     function emptyNode(node) {
         while (node.firstChild)
             node.firstChild.remove();
@@ -24,15 +64,20 @@
 
     function playClip(clipId) {
         console.log('playing ' + clipId);
+        status = 'playing';
+        addToHistory(clipId, {});
         var playerParent = document.getElementById('clipplayer');
         emptyNode(playerParent);
         var clip = document.createElement('iframe');
         clip.id = "clip";
         clip.width = "100%";
         clip.height = "100%";
+        clip.allowFullscreen = "true";
+        clip.scrolling = "no";
+        clip.frameBorder = "0";
         clip.src = "https://clips.twitch.tv/embed?clip=" + clipId + "&origin=http%3A%2F%2Fraycarro.com";
         playerParent.appendChild(clip);
-        //document.querySelector('iframe').contentWindow.postMessage('', '*');//might need this?
+        //document.querySelector('iframe').contentWindow.postMessage('', '*');//don't seem to need this?
     }
 
     function playNextVideo() {
@@ -40,13 +85,23 @@
             console.warn('playlist is empty');
             return;
         }
-        var v = playlist.shift();
-        playClip(v);
+        while (playlist.length > 0) {
+            var v = playlist.shift();
+            var secondsAgo = seenSecondsAgo(v);
+            if ( secondsAgo > 86400 || secondsAgo === null ) {
+                playClip(v);
+                break;
+            }
+        }
+
+        getMoreClips();
     }
 
+    //https://stackoverflow.com/a/9154267
     window.onmessage = function (e) {
         if (e.data.method === 'bridgeplayerevent' && e.data.args[0].event === 'ended') {
             console.log('got ended message', e.data);
+            status = 'ended';
             playNextVideo();
         } else if (e.data.method === 'bridgeplayerevent') {
             console.log('got other message '+e.data.args[0].event, e.data);
