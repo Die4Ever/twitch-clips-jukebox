@@ -37,6 +37,9 @@
         storedhistory = JSON.parse(storedhistory);
         viewhistory = storedhistory;
     } catch (e) { console.log('failed to load history', e); }
+    /*try {
+        after = JSON.parse(localStorage.getItem('after'));
+    } catch (e) { console.log('failed to load after cursor'); }*/
 
     function ajaxPost(data, callback) {
         var xhttp = new XMLHttpRequest();
@@ -77,7 +80,10 @@
         //make ajax call for https://dev.twitch.tv/docs/api/reference/#get-clips
         var request_data = { path: 'clips' };
         request_data['broadcaster_id'] = broadcasterID;
+        if (after)
+            request_data['after'] = after;
         ajaxPost(request_data, function (d) {
+            after = d.pagination.cursor;
             for (var i = 0; i < d.data.length; i++) {
                 var c = d.data[i];
                 playlist.push(c);
