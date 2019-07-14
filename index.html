@@ -30,8 +30,9 @@
         clip.id = "clip";
         clip.width = "100%";
         clip.height = "100%";
-        clip.src = "https://clips.twitch.tv/embed?clip=" + clipId + "&amp;origin=http%3A%2F%2Fraycarro.com";
+        clip.src = "https://clips.twitch.tv/embed?clip=" + clipId + "&origin=http%3A%2F%2Fraycarro.com";
         playerParent.appendChild(clip);
+        //document.querySelector('iframe').contentWindow.postMessage('', '*');//might need this?
     }
 
     function playNextVideo() {
