@@ -26,27 +26,36 @@ def twitchApiRequest(client_id, path, params):
 
 def getClips(client_id, args):
     #https://dev.twitch.tv/docs/api/reference/#get-clips
-    params = { broadcaster_id: args['broadcaster_id'] }
+    params = { }
+    broadcaster_id = args.pop('broadcaster_id', None)
+    game_id = args.pop('game_id', None)
+    id = args.pop('id', None)
+    if (id):
+        params['id'] = id
+    if (broadcaster_id):
+        params['broadcaster_id'] = broadcaster_id
+    if (game_id):
+        params['game_id'] = game_id
     return twitchApiRequest(client_id, 'clips', params)
 
-def getUsers(client_id, args):
+#def getUsers(client_id, args):
     #https://dev.twitch.tv/docs/api/reference/#get-users
-    params = { login: args['login'] }
-    return twitchApiRequest(client_id, 'users', params)
+    #params = { login: args['login'] }
+    #return twitchApiRequest(client_id, 'users', params)
 
-def getGames(client_id, args):
+#def getGames(client_id, args):
     #https://dev.twitch.tv/docs/api/reference/#get-games
-    params = { id: args['id'] }
-    return twitchApiRequest(client_id, 'games', params)
+    #params = { id: args['id'] }
+    #return twitchApiRequest(client_id, 'games', params)
 
 def handleUserRequest(client_id, args):
     path = args.pop('path')
     if (path == 'clips'):
         return getClips(client_id, args)
-    elif (path == 'users'):
-        return getUsers(client_id, args)
-    elif (path == 'games'):
-        return getGames(client_id, args)
+    #elif (path == 'users'):
+        #return getUsers(client_id, args)
+    #elif (path == 'games'):
+        #return getGames(client_id, args)
 
 print("Content-Type: application/json; charset=utf-8")
 

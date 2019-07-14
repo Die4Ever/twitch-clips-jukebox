@@ -33,7 +33,9 @@
 
     function ajaxPost(data, callback) {
         var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = callback;
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) callback( JSON.parse(this.responseText), this );
+        };
         xhttp.open("POST", "getclips.py", true);
         xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
         xhttp.send(JSON.stringify(data));
