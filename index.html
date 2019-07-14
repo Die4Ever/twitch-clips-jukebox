@@ -9,15 +9,50 @@
 </head>
 <body style="margin:0; overflow:hidden;">
     <div id="clipplayer" style="width:100vw; height:100vh;">
-        <iframe id="clip" src="https://clips.twitch.tv/embed?clip=LightRoundWalletJonCarnage" height="100%" width="100%"></iframe>
+        <!--<iframe id="clip" src="https://clips.twitch.tv/embed?clip=LightRoundWalletJonCarnage" height="100%" width="100%"></iframe>-->
     </div>
 </body>
 
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script type="text/javascript">
+
+    var playlist = ['LightRoundWalletJonCarnage', 'BoredFamousChickpeaEleGiggle', 'AmusedSleepyAlbatrossPMSTwin'];
+    function emptyNode(node) {
+        while (node.firstChild)
+            node.firstChild.remove();
+    }
+
+    function playClip(clipId) {
+        console.log('playing ' + clipId);
+        var playerParent = document.getElementById('clipplayer');
+        emptyNode(playerParent);
+        var clip = document.createElement('iframe');
+        clip.id = "clip";
+        clip.width = "100%";
+        clip.height = "100%";
+        clip.src = "https://clips.twitch.tv/embed?clip=" + clipId + "&amp;origin=http%3A%2F%2Fraycarro.com";
+        playerParent.appendChild(clip);
+    }
+
+    function playNextVideo() {
+        if (playlist.length === 0) {
+            console.warn('playlist is empty');
+            return;
+        }
+        var v = playlist.shift();
+        playClip(v);
+    }
+
     window.onmessage = function (e) {
-        console.log('got message', e);
+        if (e.data.method === 'bridgeplayerevent' && e.data.args[0].event === 'ended') {
+            console.log('got ended message', e.data);
+            playNextVideo();
+        } else if (e.data.method === 'bridgeplayerevent') {
+            console.log('got other message '+e.data.args[0].event, e.data);
+        }
     };
+
+    playNextVideo();
 
     /*var options = {
         width: '100%',
