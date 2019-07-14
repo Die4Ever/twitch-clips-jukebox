@@ -31,6 +31,13 @@
 
     var status = 'ended';
 
+    var history = {};
+    var storedhistory = localStorage.getItem('history');
+    try {
+        storedhistory = JSON.parse(storedhistory);
+        history = storedhistory;
+    } catch (e) { console.log('failed to load history', e); }
+
     function ajaxPost(data, callback) {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
@@ -44,7 +51,9 @@
 
     function seenSecondsAgo(clipId) {
         //return how many seconds it's been since we last saw this clip
-        return null;
+        if (!history[clipId]) return null;
+        var d = (new Date()).getTime();
+        return d - history[clipId].seen;
     }
 
     function addToHistory(clipId, clipData) {
@@ -52,6 +61,9 @@
         //also could save some data about the clip for statistics like view count so we can see how much it's gone up?
         //maybe that should be a separate entry and save it for all clips retreived not just the ones watched?
         //should we save the current playlist in localStorage?
+        history[clipId] = clipData;
+        history[clipId]['seen'] = (new Date()).getTime();
+        localStorage.setItem('history', JSON.stringify(history));
     }
 
     function getMoreClips() {
@@ -63,10 +75,13 @@
         //might even wanna cache these in localStorage to save on my API quota
 
         //make ajax call for https://dev.twitch.tv/docs/api/reference/#get-clips
-        ajaxPost({ path: 'clips', broadcaster_id: broadcasterID }, function (d) {
+        var request_data = { path: 'clips' };
+        request_data['broadcaster_id'] = broadcasterID;
+        ajaxPost(request_data, function (d) {
             for (var i = 0; i < d.data.length; i++) {
                 var c = d.data[i];
                 playlist.push(c);
+                //add broadcaster and game to cache? don't really have a need to cache them anymore?
             }
 
             if (status === 'ended')
@@ -77,6 +92,10 @@
     function emptyNode(node) {
         while (node.firstChild)
             node.firstChild.remove();
+    }
+
+    function updateClipInfo(clip) {
+
     }
 
     function playClip(clip) {
@@ -92,9 +111,10 @@
         el.allowFullscreen = "true";//fullscreen might not work, might have to just fullscreen the page since the iframe takes up my whole page anyways
         el.scrolling = "no";
         el.frameBorder = "0";
-        el.src = "https://clips.twitch.tv/embed?clip=" + clip.id + "&origin=http%3A%2F%2Fraycarro.com";
+        el.src = "https://clips.twitch.tv/embed?muted=false&autoplay=true&clip=" + clip.id + "&origin=http%3A%2F%2Fraycarro.com";
         playerParent.appendChild(el);
         //document.querySelector('iframe').contentWindow.postMessage('', '*');//don't seem to need this?
+        updateClipInfo(clip);
     }
 
     function playNextVideo() {
@@ -105,7 +125,7 @@
         while (playlist.length > 0) {
             var v = playlist.shift();
             var secondsAgo = seenSecondsAgo(v);
-            if ( secondsAgo > 86400 || secondsAgo === null ) {
+            if ( secondsAgo > 86400*30 || secondsAgo === null ) {
                 playClip(v);
                 break;
             }
