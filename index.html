@@ -8,17 +8,17 @@
     <title>Twitch Clips Jukebox</title>
 </head>
 <body style="margin:0; overflow:hidden; background:black;">
-    <div id="clipplayer" style="width:100vw; height:100vh;">
-    </div>
+    <div id="clipplayer" style="width:100vw; height:100vh;"></div>
+    <div class="info" style="position:absolute;top:1rem;right:1rem;color:white;"></div>
 </body>
 
 <!--<script src="https://player.twitch.tv/js/embed/v1.js"></script>-->
 <script type="text/javascript">
 
-    var playlist = ['LightRoundWalletJonCarnage', 'BoredFamousChickpeaEleGiggle', 'AmusedSleepyAlbatrossPMSTwin'];//this will probably be an array of objects once I get getMoreClips() working
+    var playlist = [];
 
-    var broadcasterID;
-    var broadcasterName = 'sesswole';//pull this and gameName from the url
+    var broadcasterID=22510310;
+    var broadcasterName;//pull this and gameName from the clip data or cache
     var gameID;
     var gameName;
 
@@ -55,7 +55,7 @@
     }
 
     function getMoreClips() {
-        if (playlist.length > 5) return;
+        if (playlist.length > 3) return;
 
         //if no broadcasterID or gameID, we need to retrieve those by the name given in the url
         //https://dev.twitch.tv/docs/api/reference/#get-users
@@ -63,9 +63,15 @@
         //might even wanna cache these in localStorage to save on my API quota
 
         //make ajax call for https://dev.twitch.tv/docs/api/reference/#get-clips
+        ajaxPost({ path: 'clips', broadcaster_id: broadcasterID }, function (d) {
+            for (var i = 0; i < d.data.length; i++) {
+                var c = d.data[i];
+                playlist.push(c);
+            }
 
-        if (status === 'ended')
-            playNextVideo();
+            if (status === 'ended')
+                playNextVideo();
+        });
     }
 
     function emptyNode(node) {
@@ -73,21 +79,21 @@
             node.firstChild.remove();
     }
 
-    function playClip(clipId) {
-        console.log('playing ' + clipId);
+    function playClip(clip) {
+        console.log('playing ' + clip.id);
         status = 'playing';
-        addToHistory(clipId, {});
+        addToHistory(clip.id, clip);
         var playerParent = document.getElementById('clipplayer');
         emptyNode(playerParent);
-        var clip = document.createElement('iframe');
-        clip.id = "clip";
-        clip.width = "100%";
-        clip.height = "100%";
-        clip.allowFullscreen = "true";//fullscreen might not work, might have to just fullscreen the page since the iframe takes up my whole page anyways
-        clip.scrolling = "no";
-        clip.frameBorder = "0";
-        clip.src = "https://clips.twitch.tv/embed?clip=" + clipId + "&origin=http%3A%2F%2Fraycarro.com";
-        playerParent.appendChild(clip);
+        var el = document.createElement('iframe');
+        el.id = "clip";
+        el.width = "100%";
+        el.height = "100%";
+        el.allowFullscreen = "true";//fullscreen might not work, might have to just fullscreen the page since the iframe takes up my whole page anyways
+        el.scrolling = "no";
+        el.frameBorder = "0";
+        el.src = "https://clips.twitch.tv/embed?clip=" + clip.id + "&origin=http%3A%2F%2Fraycarro.com";
+        playerParent.appendChild(el);
         //document.querySelector('iframe').contentWindow.postMessage('', '*');//don't seem to need this?
     }
 
