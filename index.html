@@ -53,7 +53,7 @@
         //return how many seconds it's been since we last saw this clip
         if (!history[clipId]) return null;
         var d = (new Date()).getTime();
-        return d - history[clipId].seen;
+        return (d - history[clipId].seen)/1000;
     }
 
     function addToHistory(clipId, clipData) {
@@ -126,7 +126,7 @@
         }
         while (playlist.length > 0) {
             var v = playlist.shift();
-            var secondsAgo = seenSecondsAgo(v);
+            var secondsAgo = seenSecondsAgo(v.id);
             if ( secondsAgo > 86400*30 || secondsAgo === null ) {
                 playClip(v);
                 break;
