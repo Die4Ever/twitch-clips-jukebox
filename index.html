@@ -118,6 +118,8 @@
     }
 
     function playNextVideo() {
+        getMoreClips();
+
         if (playlist.length === 0) {
             console.warn('playlist is empty');
             return;
@@ -130,8 +132,6 @@
                 break;
             }
         }
-
-        getMoreClips();
     }
 
     //https://stackoverflow.com/a/9154267
