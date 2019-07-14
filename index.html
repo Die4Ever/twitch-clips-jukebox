@@ -7,17 +7,20 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Twitch Clips Jukebox</title>
 </head>
-<body>
+<body style="margin:0;">
     <div id="clipplayer"></div>
 </body>
 
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script type="text/javascript">
     var options = {
-        width: '100%',
-        height: '100%',
-        clip: "AwkwardHelplessSalamanderSwiftRage"
+        width: '100vw',
+        height: '100vh',
+        //clip: "AwkwardHelplessSalamanderSwiftRage"
+        channel: 'chewiemelodies'
     };
     var player = new Twitch.Player("clipplayer", options);
+    player.setClip('AwkwardHelplessSalamanderSwiftRage');
+    player.play();
       //player.setVolume(0.5);
 </script>
