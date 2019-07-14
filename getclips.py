@@ -30,12 +30,15 @@ def getClips(client_id, args):
     broadcaster_id = args.pop('broadcaster_id', None)
     game_id = args.pop('game_id', None)
     id = args.pop('id', None)
+    after = args.pop('after', None)
     if (id):
         params['id'] = id
     if (broadcaster_id):
         params['broadcaster_id'] = broadcaster_id
     if (game_id):
         params['game_id'] = game_id
+    if (after):
+        params['after'] = after
     return twitchApiRequest(client_id, 'clips', params)
 
 #def getUsers(client_id, args):
