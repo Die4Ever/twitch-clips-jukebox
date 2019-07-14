@@ -1,26 +1,57 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-# enable debugging
 
-#https://dev.twitch.tv/docs/api/reference/#get-clips
-
-import cgi
-import cgitb
-cgitb.enable()
+#import cgi
+#import cgitb
+#cgitb.enable()
+import sys
 import time
 import requests
+import json
 debug=False
 
-#will need a config file for client_id
-def getclips(client_id, args):
-        url = 'https://www.googleapis.com/qpxExpress/v1/trips/search?key=mykeyhere'
-        payload = "payload"
-        headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
-        r = requests.post(url, data=payload, headers=headers)
-        return r
+config = json.load(open('config.json'))
+assert(config)
+assert(len(config['client_id']) > 0)
+
+def twitchApiRequest(client_id, path, params):
+    allowed_paths = { "clips":1, "games":1, "users":1 }
+    #params.pop('path', None)
+    assert( allowed_paths[path] )
+    url = "https://api.twitch.tv/helix/" + path
+    #headers = {'content-type': 'application/json', 'Accept-Charset': 'UTF-8'}
+    headers = {'Client-ID': client_id}
+    r = requests.get(url, headers=headers, params=params)
+    return r
+
+def getClips(client_id, args):
+    #https://dev.twitch.tv/docs/api/reference/#get-clips
+    params = { broadcaster_id: args['broadcaster_id'] }
+    return twitchApiRequest(client_id, 'clips', params)
+
+def getUsers(client_id, args):
+    #https://dev.twitch.tv/docs/api/reference/#get-users
+    params = { login: args['login'] }
+    return twitchApiRequest(client_id, 'users', params)
+
+def getGames(client_id, args):
+    #https://dev.twitch.tv/docs/api/reference/#get-games
+    params = { id: args['id'] }
+    return twitchApiRequest(client_id, 'games', params)
+
+def handleUserRequest(client_id, args):
+    path = args.pop('path')
+    if (path == 'clips'):
+        return getClips(client_id, args)
+    elif (path == 'users'):
+        return getUsers(client_id, args)
+    elif (path == 'games'):
+        return getGames(client_id, args)
 
 print("Content-Type: application/json; charset=utf-8")
 
-r = getclips('uo6dggojyb8d6soh92zknwmi5ej1q2')
+args = json.load(sys.stdin)
+r = handleUserRequest(config['client_id'], args)
 
 print("Status: "+str(r.status_code) )
 

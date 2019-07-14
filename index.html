@@ -31,6 +31,15 @@
 
     var status = 'ended';
 
+    function ajaxPost(data, callback) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = callback;
+        xhttp.open("POST", "getclips.py", true);
+        xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
+        xhttp.send(JSON.stringify(data));
+        return xhttp;
+    }
+
     function seenSecondsAgo(clipId) {
         //return how many seconds it's been since we last saw this clip
         return null;
@@ -72,7 +81,7 @@
         clip.id = "clip";
         clip.width = "100%";
         clip.height = "100%";
-        clip.allowFullscreen = "true";
+        clip.allowFullscreen = "true";//fullscreen might not work, might have to just fullscreen the page since the iframe takes up my whole page anyways
         clip.scrolling = "no";
         clip.frameBorder = "0";
         clip.src = "https://clips.twitch.tv/embed?clip=" + clipId + "&origin=http%3A%2F%2Fraycarro.com";
