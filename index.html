@@ -8,12 +8,18 @@
     <title>Twitch Clips Jukebox</title>
 </head>
 <body style="margin:0; overflow:hidden;">
-    <div id="clipplayer" style="width:100vw; height:100vh;"></div>
+    <div id="clipplayer" style="width:100vw; height:100vh;">
+        <iframe id="clip" src="https://clips.twitch.tv/embed?clip=LightRoundWalletJonCarnage" height="100%" width="100%"></iframe>
+    </div>
 </body>
 
 <script src="https://player.twitch.tv/js/embed/v1.js"></script>
 <script type="text/javascript">
-    var options = {
+    window.onmessage = function (e) {
+        console.log('got message', e);
+    };
+
+    /*var options = {
         width: '100%',
         height: '100%',
         //clip: "AwkwardHelplessSalamanderSwiftRage"
@@ -22,5 +28,5 @@
     var player = new Twitch.Player("clipplayer", options);
     player.setClip('LightRoundWalletJonCarnage');
     player.play();
-      //player.setVolume(0.5);
+      //player.setVolume(0.5);*/
 </script>
