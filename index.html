@@ -127,7 +127,7 @@
     }
 
     function sortPlaylist() {
-        if (options.shuffle) {
+        if (options.shuffle && options.shuffle!=='0' && options.shuffle!=='false') {
             playlist.sort(function () {
                 return Math.random() - 0.5;
             });
