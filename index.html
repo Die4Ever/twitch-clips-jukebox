@@ -254,6 +254,8 @@
             return;
         }
 
+        if (status !== 'ended') return;
+
         while (playlist.length > 0) {
             var v = playlist.shift();
             var daysAgo = seenDaysAgo(v);
