@@ -9,7 +9,7 @@
 </head>
 <body style="margin:0; overflow:hidden; background:black;">
     <div id="clipplayer" style="width:100vw; height:100vh;"></div>
-    <div class="info" style="position:absolute;top:1rem;right:1rem;color:white;"></div>
+    <div class="info" style="position:absolute;top:1rem;right:1rem;color:white; white-space:pre;"></div>
 </body>
 
 
@@ -210,7 +210,8 @@
 
     function updateClipInfo(clip) {
         var el = document.querySelector('.info');
-        var text = 'Clipped by ' + clip.creator_name;
+        var d = new Date(clip.created_at);
+        var text = 'Clipped by ' + clip.creator_name + '\n' + d.toLocaleString();
         el.textContent = text;
     }
 
