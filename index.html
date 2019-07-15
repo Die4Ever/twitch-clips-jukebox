@@ -280,8 +280,9 @@
         if (e.data.method === 'bridgeplayerevent' && e.data.args[0].event === 'ended') {
             console.debug('got ended message', e.data);
             status = 'ended';
-            var time_wait = (options.secondsbetween || 0.01) * 1000;
-            setTimeout(playNextVideo, time_wait);
+            var time_wait = (options.secondsbetween || 0) * 1000;
+            if (time_wait > 0) setTimeout(playNextVideo, time_wait);
+            else playNextVideo();
         } else if (e.data.method === 'bridgeplayerevent') {
             console.debug('got other message ' + e.data.args[0].event, e.data);
         }
