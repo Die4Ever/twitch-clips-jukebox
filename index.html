@@ -32,7 +32,7 @@
     var status = 'ended';
 
     try {
-        var version = '0.3';
+        var version = '0.4';
         var cacheversion = localStorage.getItem('cacheversion');
         if (version !== cacheversion) {
             console.log('clearing caches because version mismatch');
@@ -144,12 +144,14 @@
 
     function loadPlaylist() {
         try {
-            playlist = JSON.parse(localStorage.getItem('playlist-' + options.clip)) || [];
+            var key = 'playlist-' + options.clip + '-' + options.same;
+            playlist = JSON.parse(localStorage.getItem(key)) || [];
         } catch (e) { console.log('failed to load playlist', e); }
     }
 
     function savePlaylist() {
-        localStorage.setItem('playlist-' + options.clip, JSON.stringify(playlist));
+        var key = 'playlist-' + options.clip + '-' + options.same;
+        localStorage.setItem(key, JSON.stringify(playlist));
     }
 
     function readClipCache(clipId) {
