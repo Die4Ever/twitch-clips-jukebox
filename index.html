@@ -67,7 +67,7 @@
     function makeHistoryKey(clip, offset = 0) {
         var created = new Date(clip.created_at);
         created.setSeconds(0, 0);
-        var d = created.getTime() + offset * 60;
+        var d = created.getTime() + offset * 60000;//60,000ms
         var key = clip.broadcaster_id + '-' + d;
         return key;
     }
