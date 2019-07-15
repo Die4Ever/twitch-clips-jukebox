@@ -101,6 +101,10 @@
         localStorage.setItem('history', JSON.stringify(viewhistory));
     }
 
+    function clearHistory() {
+        viewhistory = {};
+    }
+
     function clipAgeDays(clip) {
         var created = new Date(clip.created_at)
         var age_ms = (new Date()) - created;
@@ -193,6 +197,9 @@
         }
         ajaxPost(request_data, function (d) {
             after = d.pagination.cursor;
+            if (!after) {
+                console.warn('Ran out of videos to add to playlist! Playlist currently has ' + playlist.length + ' clips in it. Loosen your requirements to see more clips.');
+            }
             localStorage.setItem('after-' + options.clip + '-' + options.same, after);
             for (var i = 0; i < d.data.length; i++) {
                 var c = d.data[i];
@@ -321,4 +328,6 @@
         });
     }
     init();
+
+    window.onhashchange = function() { window.location.reload(); }
 </script>
