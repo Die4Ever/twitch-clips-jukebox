@@ -31,6 +31,9 @@ def getClips(client_id, args):
     game_id = args.pop('game_id', None)
     id = args.pop('id', None)
     after = args.pop('after', None)
+    first = args.pop('first', None)
+    started_at = args.pop('started_at', None)
+    ended_at = args.pop('ended_at', None)
     if (id):
         params['id'] = id
     if (broadcaster_id):
@@ -39,6 +42,12 @@ def getClips(client_id, args):
         params['game_id'] = game_id
     if (after):
         params['after'] = after
+    if (first):
+        params['first'] = first
+    if (started_at):
+        params['started_at'] = started_at;
+    if (ended_at):
+        params['ended_at'] = ended_at;
     return twitchApiRequest(client_id, 'clips', params)
 
 #def getUsers(client_id, args):
@@ -68,4 +77,5 @@ r = handleUserRequest(config['client_id'], args)
 print("Status: "+str(r.status_code) )
 
 print("")
-print(r.text)
+data = json.loads(r.text)
+print(json.dumps(data))

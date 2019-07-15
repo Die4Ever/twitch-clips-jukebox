@@ -12,39 +12,51 @@
     <div class="info" style="position:absolute;top:1rem;right:1rem;color:white;"></div>
 </body>
 
-<!--<script src="https://player.twitch.tv/js/embed/v1.js"></script>-->
+
+
 <script type="text/javascript">
     //you might need to go to chrome://settings/content/siteDetails?site=http%3A%2F%2Fraycarro.com and set Sound to Allow
+
     var playlist = [];
 
-    var broadcasterID=22510310;
-    var broadcasterName;//pull this and gameName from the clip data or cache
-    var gameID;
-    var gameName;
+    var original_clip;
+    var options = {};
 
     var started_at;//RFC3339 format, looks like Date::toISOString() outputs this format
     var ended_at;
     var after;
-    var first = 25;//number of clips to get each ajax request
+    var first = 50;//number of clips to get each ajax request
 
-    var min_time_difference = 120;//minimum number of seconds between the creation date of 2 clips, otherwise they are considered duplicates and the one with more views is chosen
+    var min_time_difference = 2;//minimum number of minutes between the creation date of 2 clips, otherwise they are considered duplicates and the one with more views is chosen
 
     var status = 'ended';
+
+    try {
+        var version = '0.2';
+        var cacheversion = localStorage.getItem('cacheversion');
+        if (version !== cacheversion) {
+            console.log('clearing caches because version mismatch');
+            localStorage.clear();
+            localStorage.setItem('cacheversion', version);
+        }
+    } catch (e) { console.error('failed to load version', e); }
 
     var viewhistory = {};
     var storedhistory = localStorage.getItem('history');
     try {
-        storedhistory = JSON.parse(storedhistory);
+        storedhistory = JSON.parse(storedhistory) || {};
         viewhistory = storedhistory;
     } catch (e) { console.log('failed to load history', e); }
-    /*try {
-        after = JSON.parse(localStorage.getItem('after'));
-    } catch (e) { console.log('failed to load after cursor'); }*/
 
-    function ajaxPost(data, callback) {
+    function ajaxPost(data, callback, errorcallback) {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
-            if (this.readyState == 4) callback( JSON.parse(this.responseText), this );
+            try {
+                if (this.readyState == 4) callback(JSON.parse(this.responseText), this);
+            } catch (e) {
+                console.error('error in ajaxPost', e);
+                errorcallback(this);
+            }
         };
         xhttp.open("POST", "getclips.py", true);
         xhttp.setRequestHeader("Content-type", "application/json; charset=utf-8");
@@ -52,25 +64,112 @@
         return xhttp;
     }
 
-    function seenSecondsAgo(clipId) {
-        //return how many seconds it's been since we last saw this clip
-        if (!viewhistory[clipId]) return null;
-        var d = (new Date()).getTime();
-        return (d - viewhistory[clipId].seen)/1000;
+    function makeHistoryKey(clip, offset = 0) {
+        var created = new Date(clip.created_at);
+        created.setSeconds(0, 0);
+        var d = created.getTime() + offset * 60;
+        var key = clip.broadcaster_id + '-' + d;
+        return key;
     }
 
-    function addToHistory(clipId, clipData) {
+    function seenDaysAgo(clip) {
+        //return how many seconds it's been since we last saw this clip
+        var days_ago = 999999;
+
+        for (var i = -min_time_difference; i <= min_time_difference; i++) {
+            var key = makeHistoryKey(clip, i);
+            if (!viewhistory[key]) continue;
+            var d = (new Date()).getTime();
+            var tdays_ago = (d - viewhistory[key].seen) / 1000 / 86400;
+            if (tdays_ago < days_ago) {
+                days_ago = tdays_ago;
+                console.debug('offset==' + i + ', got days_ago==' + days_ago);
+            }
+        }
+        
+        return days_ago;
+    }
+
+    function addToHistory(clip) {
         //add to localStorage that we've seen this clip with the current datetime
         //also could save some data about the clip for statistics like view count so we can see how much it's gone up?
         //maybe that should be a separate entry and save it for all clips retreived not just the ones watched?
         //should we save the current playlist in localStorage?
-        viewhistory[clipId] = clipData;
-        viewhistory[clipId]['seen'] = (new Date()).getTime();
+        var key = makeHistoryKey(clip);
+        viewhistory[key] = clip;
+        viewhistory[key]['seen'] = (new Date()).getTime();
         localStorage.setItem('history', JSON.stringify(viewhistory));
     }
 
+    function clipAgeDays(clip) {
+        var created = new Date(clip.created_at)
+        var age_ms = (new Date()) - created;
+        var age_days = age_ms / 1000 / 86400;
+        return age_days;
+    }
+
+    function filterPlaylist() {
+        for (var i = 0; i < playlist.length; i++) {
+            var c = playlist[i];
+            var agedays = clipAgeDays(c);
+            var remove = false;
+            if (options.maxagedays && agedays > options.maxagedays) {
+                remove = true;
+            }
+            if (options.minviews && c.view_count < options.minviews) {
+                remove = true;
+            }
+            if (remove) {
+                playlist.splice(i, 1);
+                i--;
+            }
+        }
+    }
+
+    function sortPlaylist() {
+        if (options.shuffle) {
+            playlist.sort(function () {
+                return Math.random() - 0.5;
+            });
+            return;
+        }
+        playlist.sort(function (a, b) {
+            var age_a = clipAgeDays(a);
+            var age_b = clipAgeDays(b);
+            var views_per_day_a = a.view_count / age_a;
+            var views_per_day_b = b.view_count / age_b;
+            return views_per_day_b - views_per_day_a;
+        });
+    }
+
+    function loadPlaylist() {
+        try {
+            playlist = JSON.parse(localStorage.getItem('playlist-' + options.clip)) || [];
+        } catch (e) { console.log('failed to load playlist', e); }
+    }
+
+    function savePlaylist() {
+        localStorage.setItem('playlist-' + options.clip, JSON.stringify(playlist));
+    }
+
+    function readClipCache(clipId) {
+        try {
+            var clip = JSON.parse(localStorage.getItem(clipId));
+            if (clip) return clip;
+        } catch (e) { console.log('failed to load clip', e); }
+
+        for (var i = 0; i < playlist.length; i++) {
+            var c = playlist[i];
+            if (c.id === clipId) return c;
+        }
+    }
+
+    function writeClipCache(clip) {
+        localStorage.setItem(clip.id, JSON.stringify(clip));
+    }
+
     function getMoreClips() {
-        if (playlist.length > 3) return;
+        if (playlist.length > 5) return;
 
         //if no broadcasterID or gameID, we need to retrieve those by the name given in the url
         //https://dev.twitch.tv/docs/api/reference/#get-users
@@ -79,20 +178,29 @@
 
         //make ajax call for https://dev.twitch.tv/docs/api/reference/#get-clips
         var request_data = { path: 'clips' };
-        request_data['broadcaster_id'] = broadcasterID;
+        request_data[options.same] = original_clip[options.same];
+        request_data['first'] = first;
         if (after)
             request_data['after'] = after;
+        if (options.maxagedays) {
+            var now = new Date();
+            var oldest = new Date();
+            oldest.setTime(now.getTime() - options.maxagedays * 86400 * 1000);
+            request_data['started_at'] = oldest.toISOString();
+            request_data['ended_at'] = now.toISOString();
+        }
         ajaxPost(request_data, function (d) {
             after = d.pagination.cursor;
+            localStorage.setItem('after-' + options.clip + '-' + options.same, after);
             for (var i = 0; i < d.data.length; i++) {
                 var c = d.data[i];
                 playlist.push(c);
                 //add broadcaster and game to cache? don't really have a need to cache them anymore?
             }
 
-            if (status === 'ended')
-                playNextVideo();
-        });
+            savePlaylist();
+            checkStatus();
+        }, checkStatus);
     }
 
     function emptyNode(node) {
@@ -101,13 +209,15 @@
     }
 
     function updateClipInfo(clip) {
-
+        var el = document.querySelector('.info');
+        var text = 'Clipped by ' + clip.creator_name;
+        el.textContent = text;
     }
 
     function playClip(clip) {
-        console.log('playing ' + clip.id);
+        console.debug('playing ' + clip.id);
         status = 'playing';
-        addToHistory(clip.id, clip);
+        addToHistory(clip);
         var playerParent = document.getElementById('clipplayer');
         emptyNode(playerParent);
         var el = document.createElement('iframe');
@@ -124,43 +234,88 @@
     }
 
     function playNextVideo() {
+        filterPlaylist();
         getMoreClips();
+        filterPlaylist(); //need to filter twice otherwise getMoreClips() might think we have enough in our playlist
+        sortPlaylist();
 
         if (playlist.length === 0) {
-            console.warn('playlist is empty');
+            console.log('playlist is empty');
             return;
         }
+
         while (playlist.length > 0) {
             var v = playlist.shift();
-            var secondsAgo = seenSecondsAgo(v.id);
-            if ( secondsAgo > 86400*30 || secondsAgo === null ) {
+            var daysAgo = seenDaysAgo(v);
+            if (daysAgo > options.historydays || daysAgo === null) {
                 playClip(v);
                 break;
             }
         }
     }
 
+    function checkStatus() {
+        if (status === 'ended')
+            playNextVideo();
+        else {
+            filterPlaylist();
+            getMoreClips();
+        }
+    }
+
     //https://stackoverflow.com/a/9154267
     window.onmessage = function (e) {
         if (e.data.method === 'bridgeplayerevent' && e.data.args[0].event === 'ended') {
-            console.log('got ended message', e.data);
+            console.debug('got ended message', e.data);
             status = 'ended';
             playNextVideo();
         } else if (e.data.method === 'bridgeplayerevent') {
-            console.log('got other message '+e.data.args[0].event, e.data);
+            console.debug('got other message ' + e.data.args[0].event, e.data);
         }
     };
 
-    playNextVideo();
+    function init() {
+        var h = window.location.hash;
+        h = h.replace(/^#/, '');
+        var pairs = h.split('&');
+        options = {};
+        for (var i = 0; i < pairs.length; i++) {
+            var kv = pairs[i].split('=');
+            options[kv[0]] = kv[1];
+        }
 
-    /*var options = {
-        width: '100%',
-        height: '100%',
-        //clip: "AwkwardHelplessSalamanderSwiftRage"
-        channel: 'sesswole'
-    };
-    var player = new Twitch.Player("clipplayer", options);
-    player.setClip('LightRoundWalletJonCarnage');
-    player.play();
-      //player.setVolume(0.5);*/
+        if (h.length === 0) {
+            //set default options and put them in the url bar, maybe make a tutorial alert box
+            //max_age... sorting options? sort_by=[views,views_per_day]?
+            options = { clip: 'FreezingApatheticLouseJebaited', same: 'broadcaster_id', maxagedays: '1000', minviews: '1', shuffle: '0', historydays: '30' };
+            var hashout = '';
+            for (var k in options) {
+                hashout += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(options[k]);
+            }
+            window.location.hash = '#' + hashout.substr(1);
+            alert('I have added the default options for you in the URL bar');
+        }
+
+        loadPlaylist();
+        original_clip = readClipCache(options.clip);
+        try {
+            after = localStorage.getItem('after-' + options.clip + '-' + options.same);
+        } catch (e) { console.log('failed to load pagination cursor', e); }
+
+        if (original_clip) {
+            playNextVideo();
+            return;
+        }
+
+        var request_data = { path: 'clips', id: options.clip };
+        ajaxPost(request_data, function (d) {
+            for (var i = 0; i < d.data.length; i++) {
+                var c = d.data[i];
+                original_clip = c;
+            }
+            writeClipCache(original_clip);
+            playNextVideo();
+        });
+    }
+    init();
 </script>
