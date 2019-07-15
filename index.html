@@ -278,7 +278,8 @@
         if (e.data.method === 'bridgeplayerevent' && e.data.args[0].event === 'ended') {
             console.debug('got ended message', e.data);
             status = 'ended';
-            playNextVideo();
+            var time_wait = (options.secondsbetween || 0.01) * 1000;
+            setTimeout(playNextVideo, time_wait);
         } else if (e.data.method === 'bridgeplayerevent') {
             console.debug('got other message ' + e.data.args[0].event, e.data);
         }
@@ -297,13 +298,13 @@
         if (h.length === 0) {
             //set default options and put them in the url bar, maybe make a tutorial alert box
             //max_age... sorting options? sort_by=[views,views_per_day]?
-            options = { clip: 'FreezingApatheticLouseJebaited', same: 'broadcaster_id', maxagedays: '1000', minviews: '1', shuffle: '0', historydays: '30' };
+            options = { clip: 'FreezingApatheticLouseJebaited', same: 'broadcaster_id', maxagedays: '1000', minviews: '1', shuffle: '0', historydays: '30', secondsbetween: '2' };
             var hashout = '';
             for (var k in options) {
                 hashout += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(options[k]);
             }
             window.location.hash = '#' + hashout.substr(1);
-            alert("I have added the default options for you in the URL bar. Don't set the limits too strict otherwise you'll run out of videos.");
+            alert("I have added the default options for you in the URL bar. Don't set the limits too strict otherwise you'll run out of clips.");
             return;
         }
 
