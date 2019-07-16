@@ -247,7 +247,7 @@
         filterPlaylist();
         sortPlaylist();
 
-        while (playlist.length > 0 && status !== 'ended') {
+        while (playlist.length > 0 && status === 'ended') {
             var v = playlist.shift();
             var daysAgo = seenDaysAgo(v);
             if (daysAgo > options.historydays || daysAgo === null) {
