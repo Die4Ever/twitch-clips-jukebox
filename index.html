@@ -83,8 +83,8 @@
             var tdays_ago = (d - viewhistory[key].seen) / 1000 / 86400;
             if (tdays_ago < days_ago) {
                 days_ago = tdays_ago;
-                console.debug('offset==' + i + ', got days_ago==' + days_ago);
             }
+            console.debug('offset==' + i + ', got tdays_ago==' + tdays_ago + ', history created == ' + viewhistory[key].created_at + ', clip created == ' + clip.created_at, viewhistory[key], clip);
         }
         
         return days_ago;
