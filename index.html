@@ -251,6 +251,7 @@
             var v = playlist.shift();
             var daysAgo = seenDaysAgo(v);
             if (daysAgo > options.historydays || daysAgo === null) {
+                console.log('playing clip created on ' + v.created_at, v);
                 playClip(v);
                 break;
             }
