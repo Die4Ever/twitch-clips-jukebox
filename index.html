@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!-- https://dev.twitch.tv/docs/embed/video-and-clips/ -->
 <html lang="en">
 <head>
@@ -237,7 +237,7 @@
         el.allowFullscreen = "true";//fullscreen might not work, might have to just fullscreen the page since the iframe takes up my whole page anyways
         el.scrolling = "no";
         el.frameBorder = "0";
-        el.src = "https://clips.twitch.tv/embed?muted=false&autoplay=true&clip=" + clip.id + "&origin=http%3A%2F%2Fraycarro.com";
+        el.src = "https://clips.twitch.tv/embed?muted=false&autoplay=true&clip=" + clip.id + "&origin=" + encodeURIComponent(location.origin);
         playerParent.appendChild(el);
         //document.querySelector('iframe').contentWindow.postMessage('', '*');//don't seem to need this?
         updateClipInfo(clip);
