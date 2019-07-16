@@ -25,7 +25,7 @@
     var started_at;//RFC3339 format, looks like Date::toISOString() outputs this format
     var ended_at;
     var after;
-    var first = 50;//number of clips to get each ajax request
+    var first = 100;//number of clips to get each ajax request
 
     var min_time_difference = 2;//minimum number of minutes between the creation date of 2 clips, otherwise they are considered duplicates and the one with more views is chosen
 
