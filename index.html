@@ -32,7 +32,7 @@
     var status = 'ended';
 
     try {
-        var version = '0.4';
+        var version = '0.5';
         var cacheversion = localStorage.getItem('cacheversion');
         if (version !== cacheversion) {
             console.log('clearing caches because version mismatch');
@@ -245,24 +245,21 @@
 
     function playNextVideo() {
         filterPlaylist();
-        getMoreClips();
-        filterPlaylist(); //need to filter twice otherwise getMoreClips() might think we have enough in our playlist
         sortPlaylist();
 
-        if (playlist.length === 0) {
-            console.log('playlist is empty');
-            return;
-        }
-
-        if (status !== 'ended') return;
-
-        while (playlist.length > 0) {
+        while (playlist.length > 0 && status !== 'ended') {
             var v = playlist.shift();
             var daysAgo = seenDaysAgo(v);
             if (daysAgo > options.historydays || daysAgo === null) {
                 playClip(v);
                 break;
             }
+        }
+
+        getMoreClips();
+
+        if (playlist.length === 0) {
+            console.log('playlist is empty');
         }
     }
 
